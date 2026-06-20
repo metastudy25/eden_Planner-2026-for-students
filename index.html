@@ -125,13 +125,13 @@
             border: 1px solid #dce1e6; text-align: center; padding: 6px; font-size: 0.9rem;
         }
         .schedule-table th { background-color: #fff; color: #333; font-weight: 600; padding: 12px; }
-        .time-header { background-color: #fff; color: #006064; font-weight: 700; width: 70px; }
-        .time-range-cell { background-color: #fff; color: #555; font-size: 0.78rem; width: 90px; white-space: nowrap; }
-        .duration-cell { background-color: #fff; color: #888; font-size: 0.78rem; width: 55px; white-space: nowrap; }
+        .time-header { background-color: #fff; color: #006064; font-weight: 700; white-space: nowrap; }
+        .time-range-cell { background-color: #fff; color: #555; font-size: 0.78rem; white-space: nowrap; }
+        .duration-cell { background-color: #fff; color: #888; font-size: 0.78rem; white-space: nowrap; }
         .time-detail { display: block; font-size: 0.72rem; color: #888; margin-top: 2px; font-weight: normal; line-height: 1.4; }
         .group-header {
             background-color: #eef0ff; color: #3d4cb8; font-weight: 700; font-size: 0.66rem;
-            width: 40px; text-align: center; vertical-align: middle; padding: 4px 2px;
+            text-align: center; vertical-align: middle; padding: 4px 6px; white-space: nowrap;
         }
 
         .break-row td { background-color: var(--break-bg); }
@@ -167,7 +167,7 @@
         footer { text-align: center; color: #888; font-size: 0.8rem; margin-top: 20px; }
 
         @media print {
-            @page { size: A4 landscape; margin: 6mm; }
+            @page { size: A4; margin: 6mm; }
 
             /* 박스 바탕색은 모두 제거(잉크 절약), 선/테두리만 선명하게 표시 */
             * {
@@ -211,11 +211,12 @@
             .schedule-table th, .schedule-table td { border: 1px solid #000 !important; padding: 1px 2px !important; font-size: 0.55rem !important; }
             .plan-select { font-size: 0.55rem !important; padding: 2px 1px !important; border: 1px solid #000 !important; }
             .plan-memo { font-size: 0.48rem !important; padding: 1px !important; border: 1px solid #666 !important; }
+            .plan-memo:placeholder-shown { display: none !important; }
             .avail-badge { font-size: 0.44rem !important; }
             .time-detail { font-size: 0.5rem !important; }
             .time-range-cell, .duration-cell, .time-header { font-size: 0.55rem !important; }
             .cell-wrap { gap: 0px !important; }
-            .group-header { font-size: 0.48rem !important; width: 24px !important; padding: 1px !important; }
+            .group-header { font-size: 0.48rem !important; padding: 1px 3px !important; }
 
             footer { font-size: 0.6rem; margin-top: 6px; }
         }
@@ -232,9 +233,11 @@
     <div class="container" id="app">
 
         <button class="print-btn no-print" onclick="window.print()">🖨️ A4로 인쇄 (총 2장: 1장 설정값 / 2장 주간계획표)</button>
-        <p class="print-sub-note no-print">※ 인쇄 시 A4 가로방향으로 자동 설정되며, 1장은 등원/하원·과목 설정값, 2장은 주간 계획표가 출력됩니다.</p>
+        <p class="print-sub-note no-print">※ 인쇄 시 세로/가로 방향을 자유롭게 선택할 수 있습니다(인쇄 대화상자에서 변경). 1장은 등원/하원·과목 설정값, 2장은 주간 계획표가 출력됩니다.</p>
 
         <div id="print-page-1" class="print-page">
+
+            <div class="section-title">요일별 등원·하원 / 외출 시간 설정</div>
 
             <div class="student-info-bar">
                 <div class="info-field"><label>좌석번호</label><input type="text" class="info-input" data-field="seat" oninput="syncStudentInfo(this)"></div>
@@ -242,7 +245,6 @@
                 <div class="info-field"><label>학년</label><input type="text" class="info-input" data-field="grade" oninput="syncStudentInfo(this)"></div>
             </div>
 
-            <div class="section-title">요일별 등원·하원 / 외출 시간 설정</div>
             <div class="card">
                 <p class="info-note">📌 요일별 등원시간~하원시간을 입력하면 휴식·식사 시간을 제외한 <strong>1일 최대 순공시간</strong>이 자동 계산됩니다. 외출이 있는 날은 체크 후 외출~복귀 시간을 입력하면 해당 구간도 순공시간에서 자동으로 제외됩니다.</p>
                 <div class="subject-table-container">
@@ -313,15 +315,16 @@
 
         <div id="print-page-2" class="print-page">
 
+            <div class="section-title">이든 주간 계획표 작성</div>
+
             <div class="student-info-bar">
                 <div class="info-field"><label>좌석번호</label><input type="text" class="info-input" data-field="seat" oninput="syncStudentInfo(this)"></div>
                 <div class="info-field"><label>이름</label><input type="text" class="info-input" data-field="name" oninput="syncStudentInfo(this)"></div>
                 <div class="info-field"><label>학년</label><input type="text" class="info-input" data-field="grade" oninput="syncStudentInfo(this)"></div>
             </div>
 
-            <div class="section-title">이든 주간 계획표 작성</div>
             <div class="card" style="padding: 10px;">
-                <p class="info-note" style="padding: 10px 10px 0;">
+                <p class="info-note no-print" style="padding: 10px 10px 0;">
                     💡 과목을 선택하면 해당 칸이 <strong style="color:#3d4cb8;">순공시간</strong>으로 자동 집계되어 표 맨 아래에서 요일별 잔여 시간이 실시간으로 차감됩니다.<br>
                     📝 과목 선택 후 바로 아래 작은 입력란에 세부 메모(예: 영어(단어), 영어(독해), 수학(오답정리) 등)를 남길 수 있습니다.<br>
                     ⛔ 등원 전 · 하원 후 · 외출 중인 시간대는 회색으로 비활성화되어 선택할 수 없습니다.
@@ -330,10 +333,10 @@
                     <table class="schedule-table">
                         <thead>
                             <tr>
-                                <th style="width:40px;">구분</th>
-                                <th style="width:60px;">교시</th>
-                                <th style="width:90px;">시간</th>
-                                <th style="width:55px;">소요시간</th>
+                                <th>구분</th>
+                                <th>교시</th>
+                                <th>시간</th>
+                                <th>소요시간</th>
                                 <th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th>
                             </tr>
                         </thead>
