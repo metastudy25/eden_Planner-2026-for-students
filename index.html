@@ -184,6 +184,7 @@
                 justify-content: center;
                 box-sizing: border-box;
                 page-break-after: always;
+                page-break-inside: avoid;
             }
             .print-page:last-child { page-break-after: auto; }
 
@@ -200,38 +201,58 @@
             .container { display: block !important; max-width: 100%; padding: 0; }
 
             /* 1,2 항목 한 페이지 안에 들어가도록 여백/글자 크기 최소화 */
-            .section-title { font-size: 0.82rem; margin-bottom: 4px; }
-            .student-info-bar { padding: 4px 8px; margin-bottom: 6px; border: 1px solid #000 !important; gap: 14px; }
+            .section-title { font-size: 0.82rem; margin-bottom: 4px; color: #222 !important; }
+            .student-info-bar { padding: 4px 8px; margin-bottom: 6px; border: 1px solid #444 !important; gap: 14px; }
             .info-field label { font-size: 0.62rem; }
-            .info-input { font-size: 0.62rem; padding: 2px 6px; border: 1px solid #000 !important; min-width: 60px; }
-            .card { border: 1px solid #000 !important; padding: 6px; margin-bottom: 6px; border-radius: 0; }
+            .info-input { font-size: 0.62rem; padding: 2px 6px; border: 1px solid #444 !important; min-width: 60px; }
+            .card { border: 1px solid #444 !important; padding: 6px; margin-bottom: 6px; border-radius: 0; }
             .info-note { font-size: 0.58rem; margin-bottom: 4px; line-height: 1.3; }
             .subject-header-row { margin-bottom: 4px; }
-            .total-summary-box { padding: 6px 10px; margin-top: 6px !important; border: 1px solid #000; }
+            .total-summary-box { padding: 6px 10px; margin-top: 6px !important; border: 1px solid #444; }
             .summary-label { font-size: 0.72rem; }
             .summary-value { font-size: 0.95rem; }
 
-            /* 표: 테두리는 진하고 선명하게, 셀 여백은 최소화 */
+            /* 표: 전체 틀은 옅은 회색으로 차분하게, 셀 여백은 최소화 */
             .day-settings-table, .subject-table, .schedule-table { min-width: 0; width: 100%; border-collapse: collapse; }
             .day-settings-table th, .day-settings-table td,
             .subject-table th, .subject-table td {
-                border: 1px solid #000 !important;
+                border: 1px solid #888 !important;
                 padding: 2px 3px !important;
                 font-size: 0.62rem !important;
             }
+            .day-settings-table th, .subject-table th { border-bottom: 1.2px solid #444 !important; }
             .day-time-input, .sub-ratio-input, .sub-name-select, .sub-subname-select, .sub-name-custom {
-                font-size: 0.6rem !important; padding: 1px 2px !important; border: 1px solid #000 !important;
+                font-size: 0.6rem !important; padding: 1px 2px !important; border: 1px solid #888 !important;
             }
 
-            .schedule-table th, .schedule-table td { border: 1px solid #000 !important; padding: 1px 2px !important; font-size: 0.55rem !important; }
-            .plan-select { font-size: 0.55rem !important; padding: 2px 1px !important; border: 1px solid #000 !important; }
-            .plan-memo { font-size: 0.48rem !important; padding: 1px !important; border: 1px solid #666 !important; }
+            /* 시간표: 바깥 틀/세로선은 또렷하게, 가로 구분선은 성격에 따라 굵기·선 모양을 다르게 */
+            .schedule-table { border: 1.2px solid #333 !important; }
+            .schedule-table th, .schedule-table td {
+                border-left: 1px solid #999 !important;
+                border-right: 1px solid #999 !important;
+                border-top: none; border-bottom: none;
+                padding: 1px 2px !important; font-size: 0.55rem !important;
+            }
+            .schedule-table thead th { border-bottom: 1.2px solid #333 !important; }
+
+            /* 큰 구분(수업준비/오전수업 등) 경계 — 가늘고 또렷한 실선 */
+            .schedule-table tr.group-start-row td,
+            .schedule-table tr.group-start-row th { border-top: 0.6px solid #777 !important; }
+
+            /* 교시/휴식 등 개별 행 경계 — 옅은 점선 */
+            .schedule-table tr.group-mid-row td,
+            .schedule-table tr.group-mid-row th { border-top: 0.6px dashed #bbb !important; }
+
+            .schedule-table tr.daily-summary-row td { border-top: 1.2px solid #333 !important; }
+
+            .plan-select { font-size: 0.55rem !important; padding: 2px 1px !important; border: 1px solid #aaa !important; }
+            .plan-memo { font-size: 0.48rem !important; padding: 1px !important; border: 1px solid #ccc !important; }
             .plan-memo:placeholder-shown { display: none !important; }
             .avail-badge { font-size: 0.44rem !important; }
             .time-detail { font-size: 0.5rem !important; }
             .time-range-cell, .duration-cell, .time-header { font-size: 0.55rem !important; }
             .cell-wrap { gap: 0px !important; }
-            .group-header { font-size: 0.48rem !important; padding: 1px 3px !important; }
+            .group-header { font-size: 0.48rem !important; padding: 1px 3px !important; color: #555 !important; }
 
             footer { font-size: 0.6rem; margin-top: 6px; }
         }
@@ -872,6 +893,8 @@
                 }
 
                 const group = groupAssignment[slotIdx];
+                tr.classList.add(group ? 'group-start-row' : 'group-mid-row');
+
                 if (group) {
                     const tdGroup = document.createElement('td');
                     tdGroup.className = 'group-header';
