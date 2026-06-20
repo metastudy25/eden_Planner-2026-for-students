@@ -47,6 +47,15 @@
         .print-btn:hover { background: #2f3a96; }
         .print-sub-note { font-size: 0.8rem; color: #888; margin-bottom: 25px; }
 
+        .print-options {
+            display: flex; align-items: center; gap: 18px; margin-bottom: 12px;
+            padding: 10px 16px; background: #fff; border: 1px solid var(--border); border-radius: 6px;
+            width: fit-content;
+        }
+        .print-options-label { font-size: 0.9rem; font-weight: 700; color: #3d4cb8; }
+        .print-options label { font-size: 0.9rem; color: #333; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        .print-options input[type="radio"] { accent-color: var(--primary); cursor: pointer; }
+
         /* 좌석번호 / 이름 / 학년 기록란 */
         .student-info-bar {
             display: flex; gap: 24px; flex-wrap: wrap; align-items: center;
@@ -167,7 +176,16 @@
         footer { text-align: center; color: #888; font-size: 0.8rem; margin-top: 20px; }
 
         @media print {
-            @page { size: A4; margin: 6mm; }
+            /* 인쇄 방향은 #dynamic-page-style 에서 동적으로 설정됨 */
+            .print-page {
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                box-sizing: border-box;
+                page-break-after: always;
+            }
+            .print-page:last-child { page-break-after: auto; }
 
             /* 박스 바탕색은 모두 제거(잉크 절약), 선/테두리만 선명하게 표시 */
             * {
@@ -180,9 +198,6 @@
             body { background: #fff !important; padding: 0; }
             .no-print, #intro-overlay, .add-btn, .del-btn, .print-btn, .print-sub-note { display: none !important; }
             .container { display: block !important; max-width: 100%; padding: 0; }
-
-            .print-page { page-break-after: always; }
-            .print-page:last-child { page-break-after: auto; }
 
             /* 1,2 항목 한 페이지 안에 들어가도록 여백/글자 크기 최소화 */
             .section-title { font-size: 0.82rem; margin-bottom: 4px; }
@@ -221,6 +236,9 @@
             footer { font-size: 0.6rem; margin-top: 6px; }
         }
     </style>
+    <style id="dynamic-page-style">
+        @media print { @page { size: A4 landscape; margin: 6mm; } }
+    </style>
 </head>
 <body>
 
@@ -232,8 +250,13 @@
 
     <div class="container" id="app">
 
+        <div class="print-options no-print">
+            <span class="print-options-label">인쇄 방향:</span>
+            <label><input type="radio" name="print-orientation" value="landscape" checked onchange="setPrintOrientation(this.value)"> 가로방향</label>
+            <label><input type="radio" name="print-orientation" value="portrait" onchange="setPrintOrientation(this.value)"> 세로방향</label>
+        </div>
         <button class="print-btn no-print" onclick="window.print()">🖨️ A4로 인쇄 (총 2장: 1장 설정값 / 2장 주간계획표)</button>
-        <p class="print-sub-note no-print">※ 인쇄 시 세로/가로 방향을 자유롭게 선택할 수 있습니다(인쇄 대화상자에서 변경). 1장은 등원/하원·과목 설정값, 2장은 주간 계획표가 출력됩니다.</p>
+        <p class="print-sub-note no-print">※ 위에서 인쇄 방향을 선택한 뒤 인쇄해 주세요. 1장은 등원/하원·과목 설정값, 2장은 주간 계획표가 출력됩니다.</p>
 
         <div id="print-page-1" class="print-page">
 
@@ -470,6 +493,13 @@
 
         function overlapMinutes(aStart, aEnd, bStart, bEnd) {
             return Math.max(0, Math.min(aEnd, bEnd) - Math.max(aStart, bStart));
+        }
+
+        function setPrintOrientation(orientation) {
+            const styleEl = document.getElementById('dynamic-page-style');
+            if (styleEl) {
+                styleEl.textContent = `@media print { @page { size: A4 ${orientation}; margin: 6mm; } }`;
+            }
         }
 
         function syncStudentInfo(el) {
