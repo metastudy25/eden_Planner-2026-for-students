@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이든관리형학습센터 주간계획표</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        :root {
+            --primary: #4a5bf0;
+            --bg-gray: #f5f6f9;
+            --border: #e1e4e8;
+            --text-dark: #333;
+            --danger: #ff4d4f;
+            --success: #52c41a;
+            --white: #fff;
+            --break-bg: #e0f7fa;
+            --meal-bg: #fff9c4;
+        }
+        * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--bg-gray); color: var(--text-dark); padding-bottom: 60px; }
+
+        #intro-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #3d4cb8, #5c6bc0);
+            z-index: 9999; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; color: white;
+            transition: opacity 0.5s ease;
+        }
+        .start-btn {
+            background: white; color: #3d4cb8; border: none; padding: 15px 40px;
+            border-radius: 30px; font-weight: bold; font-size: 1.1rem; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;
+        }
+        .start-btn:hover { transform: scale(1.05); }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px; display: none; }
+        .section-title { font-size: 1.2rem; font-weight: 700; color: #3d4cb8; margin-bottom: 15px; }
+        .card { background: var(--white); border-radius: 8px; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+
+        .info-note { font-size: 0.85rem; color: #666; margin-bottom: 15px; line-height: 1.6; }
+
+        .print-btn {
+            background: #3d4cb8; color: #fff; border: none; padding: 12px 28px;
+            border-radius: 6px; font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-bottom: 10px;
+        }
+        .print-btn:hover { background: #2f3a96; }
+        .print-sub-note { font-size: 0.8rem; color: #888; margin-bottom: 25px; }
+
+        /* 1. 요일별 등원/하원/외출 설정 */
+        .day-settings-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        .day-settings-table th {
+            background-color: #f9fafb; color: #555; font-size: 0.8rem; font-weight: 700;
+            padding: 10px 6px; text-align: center; border-bottom: 2px solid var(--border); border-top: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        .day-settings-table td {
+            padding: 8px 6px; border-bottom: 1px solid var(--border); text-align: center; font-size: 0.85rem;
+        }
+        .day-time-input { padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; width: 100%; }
+        .day-time-input:disabled { background-color: #f0f0f0; color: #aaa; border-color: #ddd; }
+        .day-active-check, .outing-check { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+
+        .total-summary-box {
+            background-color: #f0f2ff; border-radius: 8px; padding: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .summary-label { font-size: 0.95rem; font-weight: bold; color: #3d4cb8; }
+        .summary-value { font-size: 1.5rem; font-weight: 800; color: #3d4cb8; }
+
+        /* 2. 과목별 공부 시간 설정 */
+        .subject-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .add-btn {
+            background-color: #4a5bf0; color: white; border: none; padding: 8px 20px;
+            border-radius: 6px; font-weight: bold; cursor: pointer;
+        }
+        .add-btn:hover { background-color: #3849c7; }
+
+        .subject-table-container { overflow-x: auto; }
+        .subject-table { width: 100%; border-collapse: collapse; min-width: 1250px; }
+        .subject-table th {
+            background-color: #f9fafb; color: #555; font-size: 0.85rem; font-weight: 700;
+            padding: 12px 8px; text-align: center; border-bottom: 2px solid var(--border); border-top: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        .subject-table td {
+            padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; text-align: center; font-size: 0.9rem;
+        }
+
+        .sub-name-select, .sub-subname-select {
+            width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; text-align: center;
+            background: #fff; cursor: pointer; font-size: 0.85rem;
+        }
+        .sub-subname-select { border-color: #c5cae9; background: #f7f8ff; font-size: 0.8rem; }
+        .sub-name-select:focus, .sub-subname-select:focus { outline: none; border-color: var(--primary); }
+        .sub-name-custom { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-size: 0.85rem; }
+        .sub-ratio-input { width: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; text-align: center; }
+        .del-btn { background: transparent; border: none; color: #ff4d4f; cursor: pointer; font-size: 1.2rem; }
+
+        .highlight-blue { color: var(--primary); font-weight: bold; }
+        .highlight-gray { color: #666; font-size: 0.85rem; }
+
+        .status-cell { font-weight: bold; font-size: 0.85rem; }
+        .status-ok { color: var(--success); }
+        .status-over { color: var(--danger); }
+        .status-def { color: #888; }
+
+        tr.institution-row td { background-color: #fafbfc; }
+
+        /* 3. 시간표 */
+        .schedule-wrapper { overflow-x: auto; }
+        .schedule-table { width: 100%; border-collapse: collapse; min-width: 1050px; }
+        .schedule-table th, .schedule-table td {
+            border: 1px solid #dce1e6; text-align: center; padding: 6px; font-size: 0.9rem;
+        }
+        .schedule-table th { background-color: #fff; color: #333; font-weight: 600; padding: 12px; }
+        .time-header { background-color: #fff; color: #006064; font-weight: 700; width: 80px; }
+        .time-detail { display: block; font-size: 0.72rem; color: #888; margin-top: 2px; font-weight: normal; line-height: 1.4; }
+        .group-header {
+            background-color: #eef0ff; color: #3d4cb8; font-weight: 700; font-size: 0.78rem;
+            width: 46px; text-align: center; vertical-align: middle; padding: 6px 2px;
+        }
+
+        .break-row td { background-color: var(--break-bg); }
+        .meal-row td { background-color: var(--meal-bg); }
+
+        .cell-wrap { display: flex; flex-direction: column; gap: 3px; align-items: stretch; }
+        .cell-wrap.cell-unavailable { opacity: 0.45; }
+
+        .avail-badge {
+            font-size: 0.62rem; padding: 1px 4px; border-radius: 3px; display: none; margin-bottom: 1px;
+        }
+        .avail-badge.partial { display: inline-block; background: #fff3e0; color: #ef6c00; }
+        .avail-badge.unavailable { display: inline-block; background: #eceff1; color: #90a4ae; }
+
+        .plan-select {
+            width: 100%; border: 1px solid transparent; background: transparent;
+            padding: 8px 4px; font-size: 0.9rem; cursor: pointer; text-align: center; border-radius: 4px;
+        }
+        .plan-select:hover { background-color: rgba(255,255,255,0.5); border: 1px solid #ccc; }
+        .plan-select:focus { outline: none; border: 1px solid #4a5bf0; background-color: white; }
+        .plan-select:disabled { cursor: not-allowed; background: #f5f5f5 !important; color: #bbb !important; border-color: #eee !important; }
+
+        .plan-memo {
+            width: 100%; border: 1px solid #e1e4e8; border-radius: 4px; padding: 3px 4px;
+            font-size: 0.72rem; text-align: center; color: #666; background: #fafafa;
+        }
+        .plan-memo:focus { outline: none; border-color: #4a5bf0; background: #fff; }
+
+        .daily-summary-row td { background-color: #eef0ff; font-size: 0.78rem; padding: 10px 6px; }
+        .daily-total-cell { line-height: 1.6; }
+        .remaining-text { font-size: 0.72rem; }
+
+        footer { text-align: center; color: #888; font-size: 0.8rem; margin-top: 20px; }
+
+        @media print {
+            @page { size: A4 landscape; margin: 10mm; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+            body { background: #fff; padding: 0; }
+            .no-print, #intro-overlay, .add-btn, .del-btn, .print-btn, .print-sub-note { display: none !important; }
+            .container { display: block !important; max-width: 100%; padding: 0; }
+            .print-page { page-break-after: always; }
+            .print-page:last-child { page-break-after: auto; }
+            .card { box-shadow: none; border: 1px solid #999; }
+            .day-settings-table, .subject-table, .schedule-table { min-width: 0; width: 100%; }
+            .schedule-table { font-size: 0.6rem; }
+            .schedule-table th, .schedule-table td { padding: 3px 2px; }
+            .plan-memo { font-size: 0.54rem; padding: 1px; }
+            .avail-badge { font-size: 0.5rem; }
+            select, input { font-size: 0.66rem; }
+            .info-note { font-size: 0.7rem; }
+            .time-detail { font-size: 0.58rem; }
+            .group-header { font-size: 0.6rem; width: 32px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="intro-overlay">
+        <h1 style="margin-bottom:10px; font-size:2.5rem;">이든관리형학습센터</h1>
+        <p style="margin-bottom:30px; opacity:0.8;">자기주도학습 플래너 (Ver 2026)</p>
+        <button class="start-btn" onclick="startApp()">계획 시작하기 🚀</button>
+    </div>
+
+    <div class="container" id="app">
+
+        <button class="print-btn no-print" onclick="window.print()">🖨️ A4로 인쇄 (총 2장: 1장 설정값 / 2장 주간계획표)</button>
+        <p class="print-sub-note no-print">※ 인쇄 시 A4 가로방향으로 자동 설정되며, 1장은 등원/하원·과목 설정값, 2장은 주간 계획표가 출력됩니다.</p>
+
+        <div id="print-page-1" class="print-page">
+
+            <div class="section-title">요일별 등원·하원 / 외출 시간 설정</div>
+            <div class="card">
+                <p class="info-note">📌 요일별 등원시간~하원시간을 입력하면 휴식·식사 시간을 제외한 <strong>1일 최대 순공시간</strong>이 자동 계산됩니다. 외출이 있는 날은 체크 후 외출~복귀 시간을 입력하면 해당 구간도 순공시간에서 자동으로 제외됩니다.</p>
+                <div class="subject-table-container">
+                    <table class="day-settings-table">
+                        <thead>
+                            <tr>
+                                <th>요일</th><th>사용</th><th>등원시간</th><th>하원시간</th>
+                                <th>외출</th><th>외출시간</th><th>복귀시간</th>
+                                <th>재원시간</th><th>1일 최대<br>순공시간</th>
+                            </tr>
+                        </thead>
+                        <tbody id="day-settings-tbody"></tbody>
+                        <tfoot>
+                            <tr style="background:#f0f2ff; font-weight:bold;">
+                                <td colspan="7" style="text-align:right; padding-right:15px;">주간 합계:</td>
+                                <td id="weekly-attend-total">0분</td>
+                                <td id="weekly-study-total" style="color:#3d4cb8;">0분</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="total-summary-box" style="margin-top:20px;">
+                    <div>
+                        <div class="summary-label">주 최대 순공시간</div>
+                        <div style="font-size:0.85rem; color:#666; margin-top:5px;">등원~하원 시간 기준 자동 계산 (휴식·식사·외출 제외)</div>
+                    </div>
+                    <div class="summary-value" id="weekly-total-display">0분 | 0시간 0분</div>
+                </div>
+            </div>
+
+            <div class="section-title">과목별 공부 시간 설정</div>
+            <div class="card">
+                <div class="subject-header-row">
+                    <span style="font-size:0.9rem; color:#666;">* 과목을 선택하면 세부 과목을 한 번 더 고를 수 있습니다 (국어·수학·영어·사회탐구·과학탐구).</span>
+                    <button class="add-btn no-print" onclick="addSubject()">+ 과목 추가</button>
+                </div>
+                <p class="info-note">📐 비율(%)을 설정하면 위에서 계산된 <strong>주 최대 순공시간</strong>을 기준으로 목표 시간이 근사치로 자동 계산됩니다.<br>
+                🏫 <strong>학교 / 학원</strong> 항목은 비율(%) 계산에는 포함되지 않으며, 시간표에서 실제 사용한 시간만 집계됩니다.</p>
+                <div class="subject-table-container">
+                    <table class="subject-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 17%;">과목명</th>
+                                <th style="width: 8%;">비율 (%)</th>
+                                <th style="width: 11%;">주간 목표 시간(분)<br><span style="font-weight:normal; font-size:0.75rem;">(순공시간 기준)</span></th>
+                                <th style="width: 10%;">배정된 시간</th>
+                                <th style="width: 14%;">주간 남은 시간<br><span style="font-weight:normal; font-size:0.75rem;">(상태)</span></th>
+                                <th style="width: 11%;">일일 평균 (분)<br><span style="font-weight:normal; font-size:0.75rem;">(목표)</span></th>
+                                <th style="width: 11%; color:var(--primary);">일일 남은 시간<br><span style="font-weight:normal; font-size:0.75rem;">(부족분/일)</span></th>
+                                <th style="width: 5%;">삭제</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subject-tbody"></tbody>
+                        <tfoot>
+                            <tr style="background:#f9fafb; font-weight:bold;">
+                                <td style="text-align:right;">합계(교과목):</td>
+                                <td id="total-ratio">0%</td>
+                                <td id="total-target-min">0분</td>
+                                <td id="total-assigned-min">0분</td>
+                                <td colspan="4"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="print-page-2" class="print-page">
+
+            <div class="section-title">이든 주간 계획표 작성</div>
+            <div class="card" style="padding: 10px;">
+                <p class="info-note" style="padding: 10px 10px 0;">
+                    💡 과목을 선택하면 해당 칸이 <strong style="color:#3d4cb8;">순공시간</strong>으로 자동 집계되어 표 맨 아래에서 요일별 잔여 시간이 실시간으로 차감됩니다.<br>
+                    📝 과목 선택 후 바로 아래 작은 입력란에 세부 메모(예: 영어(단어), 영어(독해), 수학(오답정리) 등)를 남길 수 있습니다.<br>
+                    ⛔ 등원 전 · 하원 후 · 외출 중인 시간대는 회색으로 비활성화되어 선택할 수 없습니다.
+                </p>
+                <div class="schedule-wrapper">
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                <th style="width:46px;">구분</th>
+                                <th style="width:80px;">교시</th>
+                                <th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedule-body"></tbody>
+                        <tfoot id="schedule-tfoot"></tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <footer>
+                이든관리형학습센터 제공 | 경기도 하남시 미사강변대로 80 그린프라자 7층<br>
+                Copyright © 2026 Eden Managed Learning Center
+            </footer>
+
+        </div>
+
+    </div>
+
+    <script>
+        // ===== 기본 데이터 =====
+
+        const DAY_NAMES = ['월', '화', '수', '목', '금', '토', '일'];
+
+        const PRESET_SUBJECTS = [
+            { value: '국어', category: 'study' },
+            { value: '수학', category: 'study' },
+            { value: '영어', category: 'study' },
+            { value: '한국사', category: 'study' },
+            { value: '탐구', category: 'study' },
+            { value: '사회탐구', category: 'study' },
+            { value: '과학탐구', category: 'study' },
+            { value: '제2외국어', category: 'study' },
+            { value: '학교', category: 'institution' },
+            { value: '학원', category: 'institution' },
+            { value: '기타(직접입력)', category: 'custom' }
+        ];
+
+        // 과목 선택 시 한 번 더 고를 수 있는 세부 과목 목록
+        const SUBJECT_SUBCATEGORIES = {
+            '국어': ['국어', '독서', '독서와 작문', '문학', '화법과 작문', '화법과 언어', '언어와 매체'],
+            '수학': ['공통수학(수학 상·하)', '대수(수학Ⅰ)', '미적분Ⅰ(수학Ⅱ)', '확률과 통계', '미적분(미적분Ⅱ)', '기하'],
+            '영어': ['영어', '영어Ⅰ', '영어Ⅱ'],
+            '사회탐구': ['통합사회', '경제', '동아시아사', '사회·문화', '생활과 윤리', '세계사', '세계지리', '윤리와 사상', '정치와 법(정치, 법과 사회)', '한국지리'],
+            '과학탐구': ['통합과학', '과학탐구실험', '물리학(물리학Ⅰ·Ⅱ)', '생명과학(생명과학Ⅰ·Ⅱ)', '지구과학(지구과학Ⅰ·Ⅱ)', '화학(화학Ⅰ·Ⅱ)']
+        };
+
+        const PRESET_COLOR_MAP = {
+            '국어': { color: '#ffebee', text: '#c62828' },
+            '수학': { color: '#e3f2fd', text: '#1565c0' },
+            '영어': { color: '#fff3e0', text: '#ef6c00' },
+            '한국사': { color: '#efebe9', text: '#6d4c41' },
+            '탐구': { color: '#e8f5e9', text: '#2e7d32' },
+            '사회탐구': { color: '#e8f5e9', text: '#2e7d32' },
+            '과학탐구': { color: '#e0f2f1', text: '#00695c' },
+            '제2외국어': { color: '#fce4ec', text: '#ad1457' },
+            '학교': { color: '#eceff1', text: '#37474f' },
+            '학원': { color: '#ede7f6', text: '#5e35b1' }
+        };
+
+        let subjects = [
+            { id: 'kor', topCategory: '국어', name: '국어', ratio: 0, color: '#ffebee', text: '#c62828', category: 'study', isCustom: false },
+            { id: 'math', topCategory: '수학', name: '공통수학(수학 상·하)', ratio: 0, color: '#e3f2fd', text: '#1565c0', category: 'study', isCustom: false },
+            { id: 'eng', topCategory: '영어', name: '영어', ratio: 0, color: '#fff3e0', text: '#ef6c00', category: 'study', isCustom: false },
+            { id: 'tam', topCategory: '탐구', name: '탐구', ratio: 0, color: '#e8f5e9', text: '#2e7d32', category: 'study', isCustom: false },
+            { id: 'school', topCategory: '학교', name: '학교', ratio: null, color: '#eceff1', text: '#37474f', category: 'institution', isCustom: false },
+            { id: 'academy', topCategory: '학원', name: '학원', ratio: null, color: '#ede7f6', text: '#5e35b1', category: 'institution', isCustom: false }
+        ];
+
+        let daySettings = DAY_NAMES.map(name => ({
+            name, active: true, arrival: '14:00', departure: '22:00',
+            outingEnabled: false, outStart: '17:00', outEnd: '18:00'
+        }));
+
+        let totalWeeklyMinutes = 0;
+        let activeDayCount = 7;
+        let dailyMaxStudyMinutes = [0, 0, 0, 0, 0, 0, 0];
+        let dailyIntervals = [[], [], [], [], [], [], []];
+
+        // 실제 시간표 기준 교시 구조 (첨부 PDF 반영, 08:00 시작)
+        const timeSlots = [
+            { name: "준비", min: 10, type: "break" },
+            { name: "0교시", min: 30, type: "study" },
+            { name: "1교시", min: 80, type: "study" },
+            { name: "휴식", min: 20, type: "break" },
+            { name: "2교시", min: 100, type: "study" },
+            { name: "점심", min: 70, type: "break" },
+            { name: "3교시", min: 70, type: "study" },
+            { name: "휴식", min: 20, type: "break" },
+            { name: "4교시", min: 100, type: "study" },
+            { name: "휴식", min: 20, type: "break" },
+            { name: "5교시", min: 80, type: "study" },
+            { name: "저녁", min: 70, type: "break" },
+            { name: "0교시", min: 20, type: "study" },
+            { name: "6교시", min: 70, type: "study" },
+            { name: "휴식", min: 20, type: "break" },
+            { name: "7교시", min: 60, type: "study" },
+            { name: "휴식", min: 10, type: "break" },
+            { name: "8교시", min: 100, type: "study" }
+        ];
+
+        // 시간표 좌측 "구분" 묶음 (수업준비/오전수업/점심시간/오후수업/저녁/저녁수업)
+        const SCHEDULE_GROUPS = [
+            { label: '수업준비', rows: 2 },
+            { label: '오전수업', rows: 3 },
+            { label: '점심시간', rows: 1 },
+            { label: '오후수업', rows: 5 },
+            { label: '저녁', rows: 1 },
+            { label: '저녁수업', rows: 6 }
+        ];
+
+        (function computeSlotClockTimes() {
+            let cursor = 8 * 60; // 08:00
+            timeSlots.forEach(slot => {
+                slot.startMin = cursor;
+                slot.endMin = cursor + slot.min;
+                cursor = slot.endMin;
+            });
+        })();
+
+        function timeToMinutes(str) {
+            if (!str) return 0;
+            const [h, m] = str.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        function minutesToTimeStr(min) {
+            const h = Math.floor(min / 60) % 24;
+            const m = min % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function overlapMinutes(aStart, aEnd, bStart, bEnd) {
+            return Math.max(0, Math.min(aEnd, bEnd) - Math.max(aStart, bStart));
+        }
+
+        function startApp() {
+            document.getElementById('intro-overlay').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('intro-overlay').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+                renderScheduleStructure();
+                renderDaySettingsTable();
+                renderSubjectTable();
+            }, 500);
+        }
+
+        // ===== 1. 요일별 등원/하원/외출 설정 =====
+
+        function renderDaySettingsTable() {
+            const tbody = document.getElementById('day-settings-tbody');
+            tbody.innerHTML = '';
+
+            daySettings.forEach((d, i) => {
+                const tr = document.createElement('tr');
+                tr.dataset.day = i;
+                tr.innerHTML = `
+                    <td style="font-weight:700;">${d.name}요일</td>
+                    <td><input type="checkbox" class="day-active-check" ${d.active ? 'checked' : ''} onchange="updateDaySetting(${i}, 'active', this.checked)"></td>
+                    <td><input type="time" class="day-time-input" value="${d.arrival}" ${d.active ? '' : 'disabled'} onchange="updateDaySetting(${i}, 'arrival', this.value)"></td>
+                    <td><input type="time" class="day-time-input" value="${d.departure}" ${d.active ? '' : 'disabled'} onchange="updateDaySetting(${i}, 'departure', this.value)"></td>
+                    <td><input type="checkbox" class="outing-check" ${d.outingEnabled ? 'checked' : ''} ${d.active ? '' : 'disabled'} onchange="updateDaySetting(${i}, 'outingEnabled', this.checked)"></td>
+                    <td><input type="time" class="day-time-input" value="${d.outStart}" ${(d.active && d.outingEnabled) ? '' : 'disabled'} onchange="updateDaySetting(${i}, 'outStart', this.value)"></td>
+                    <td><input type="time" class="day-time-input" value="${d.outEnd}" ${(d.active && d.outingEnabled) ? '' : 'disabled'} onchange="updateDaySetting(${i}, 'outEnd', this.value)"></td>
+                    <td class="attend-min-cell highlight-gray">0분</td>
+                    <td class="study-min-cell highlight-blue">0분</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            recalcDayAttendance();
+        }
+
+        function updateDaySetting(i, key, val) {
+            daySettings[i][key] = val;
+            if (key === 'active' || key === 'outingEnabled') {
+                renderDaySettingsTable();
+            } else {
+                recalcDayAttendance();
+            }
+        }
+
+        function recalcDayAttendance() {
+            let weeklyAttend = 0;
+            let weeklyStudy = 0;
+            let activeCount = 0;
+
+            daySettings.forEach((d, i) => {
+                const tr = document.querySelector(`#day-settings-tbody tr[data-day="${i}"]`);
+
+                if (!d.active) {
+                    dailyMaxStudyMinutes[i] = 0;
+                    dailyIntervals[i] = [];
+                    if (tr) {
+                        tr.querySelector('.attend-min-cell').innerText = '-';
+                        tr.querySelector('.study-min-cell').innerText = '-';
+                    }
+                    return;
+                }
+
+                activeCount++;
+                const arrivalMin = timeToMinutes(d.arrival);
+                const departureMin = timeToMinutes(d.departure);
+                let intervals;
+
+                if (d.outingEnabled) {
+                    const outStartMin = timeToMinutes(d.outStart);
+                    const outEndMin = timeToMinutes(d.outEnd);
+                    if (outStartMin > arrivalMin && outEndMin < departureMin && outEndMin > outStartMin) {
+                        intervals = [[arrivalMin, outStartMin], [outEndMin, departureMin]];
+                    } else {
+                        intervals = [[arrivalMin, departureMin]];
+                    }
+                } else {
+                    intervals = [[arrivalMin, departureMin]];
+                }
+                intervals = intervals.filter(iv => iv[1] > iv[0]);
+                dailyIntervals[i] = intervals;
+
+                const attendMin = intervals.reduce((s, iv) => s + (iv[1] - iv[0]), 0);
+                let studyMin = 0;
+                timeSlots.forEach(slot => {
+                    if (slot.type !== 'study') return;
+                    let avail = 0;
+                    intervals.forEach(iv => { avail += overlapMinutes(slot.startMin, slot.endMin, iv[0], iv[1]); });
+                    studyMin += avail;
+                });
+
+                dailyMaxStudyMinutes[i] = studyMin;
+                weeklyAttend += attendMin;
+                weeklyStudy += studyMin;
+
+                if (tr) {
+                    tr.querySelector('.attend-min-cell').innerText = attendMin + '분';
+                    tr.querySelector('.study-min-cell').innerText = studyMin + '분';
+                }
+            });
+
+            totalWeeklyMinutes = weeklyStudy;
+            activeDayCount = activeCount > 0 ? activeCount : 1;
+
+            const attendTotalEl = document.getElementById('weekly-attend-total');
+            const studyTotalEl = document.getElementById('weekly-study-total');
+            if (attendTotalEl) attendTotalEl.innerText = weeklyAttend + '분';
+            if (studyTotalEl) studyTotalEl.innerText = weeklyStudy + '분';
+
+            const h = Math.floor(weeklyStudy / 60);
+            const m = weeklyStudy % 60;
+            const displayEl = document.getElementById('weekly-total-display');
+            if (displayEl) displayEl.innerText = `${weeklyStudy}분 | ${h}시간 ${m}분`;
+
+            updateScheduleAvailability();
+            updateCalculation();
+        }
+
+        // ===== 2. 과목 테이블 (2단계 드롭다운) =====
+
+        function buildSubjectRow(sub) {
+            const tr = document.createElement('tr');
+            tr.dataset.id = sub.id;
+            if (sub.category === 'institution') tr.classList.add('institution-row');
+
+            const topOptionsHtml = PRESET_SUBJECTS.map(p => {
+                const optVal = p.category === 'custom' ? '__custom__' : p.value;
+                const isSelected = sub.isCustom ? (p.category === 'custom') : (sub.topCategory === p.value);
+                return `<option value="${optVal}" ${isSelected ? 'selected' : ''}>${p.value}</option>`;
+            }).join('');
+
+            const subList = (!sub.isCustom && sub.topCategory) ? SUBJECT_SUBCATEGORIES[sub.topCategory] : null;
+            const subSelectHtml = (subList && subList.length > 0)
+                ? `<select class="sub-subname-select" onchange="updateSubSubName('${sub.id}', this.value)" style="margin-top:4px;">
+                       ${subList.map(opt => `<option value="${opt}" ${sub.name === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                   </select>`
+                : '';
+
+            const ratioCellHtml = sub.category === 'institution'
+                ? `<td style="color:#aaa;">-</td>`
+                : `<td><input type="number" class="sub-ratio-input" value="${sub.ratio || 0}" onchange="updateSubRatio('${sub.id}', this.value)"></td>`;
+
+            tr.innerHTML = `
+                <td>
+                    <select class="sub-name-select" onchange="updateSubName('${sub.id}', this.value)">
+                        <option value="" ${!sub.topCategory ? 'selected' : ''}>선택</option>
+                        ${topOptionsHtml}
+                    </select>
+                    ${subSelectHtml}
+                    <input type="text" class="sub-name-custom" placeholder="과목명 직접입력"
+                        value="${sub.isCustom ? sub.name : ''}"
+                        style="display:${sub.isCustom ? 'block' : 'none'}; margin-top:4px;"
+                        oninput="updateSubCustomName('${sub.id}', this.value)">
+                </td>
+                ${ratioCellHtml}
+                <td class="weekly-goal-cell highlight-blue">-</td>
+                <td class="assigned-cell">0분</td>
+                <td class="status-cell">-</td>
+                <td class="daily-avg-cell highlight-gray">-</td>
+                <td class="daily-rem-cell highlight-blue">-</td>
+                <td style="text-align:center;"><button class="del-btn no-print" onclick="deleteSubject('${sub.id}')">🗑</button></td>
+            `;
+            return tr;
+        }
+
+        function renderSubjectTable() {
+            const tbody = document.getElementById('subject-tbody');
+            tbody.innerHTML = '';
+
+            const studySubjects = subjects.filter(s => s.category !== 'institution');
+            const institutionSubjects = subjects.filter(s => s.category === 'institution');
+
+            studySubjects.forEach(sub => tbody.appendChild(buildSubjectRow(sub)));
+            institutionSubjects.forEach(sub => tbody.appendChild(buildSubjectRow(sub)));
+
+            updateScheduleDropdowns();
+            updateCalculation();
+        }
+
+        function addSubject() {
+            const newId = 'sub_' + Date.now();
+            const hue = Math.floor(Math.random() * 360);
+            subjects.push({
+                id: newId, topCategory: '', name: '', ratio: 0,
+                color: `hsl(${hue}, 90%, 96%)`, text: `hsl(${hue}, 80%, 30%)`,
+                category: 'study', isCustom: false
+            });
+            renderSubjectTable();
+        }
+
+        function deleteSubject(id) {
+            if (confirm('이 과목을 삭제하시겠습니까?')) {
+                subjects = subjects.filter(s => s.id !== id);
+                renderSubjectTable();
+            }
+        }
+
+        function updateSubName(id, topVal) {
+            const sub = subjects.find(s => s.id === id);
+            if (!sub) return;
+
+            if (topVal === '__custom__') {
+                sub.isCustom = true;
+                sub.topCategory = '__custom__';
+                sub.category = 'study';
+                sub.name = sub.customName || '';
+            } else {
+                const preset = PRESET_SUBJECTS.find(p => p.value === topVal);
+                sub.isCustom = false;
+                sub.topCategory = topVal;
+                sub.category = preset ? preset.category : 'study';
+
+                const subList = SUBJECT_SUBCATEGORIES[topVal];
+                if (subList && subList.length > 0) {
+                    sub.name = subList.includes(sub.name) ? sub.name : subList[0];
+                } else {
+                    sub.name = topVal;
+                }
+
+                if (PRESET_COLOR_MAP[topVal]) {
+                    sub.color = PRESET_COLOR_MAP[topVal].color;
+                    sub.text = PRESET_COLOR_MAP[topVal].text;
+                }
+                if (sub.category === 'institution') {
+                    sub.ratio = null;
+                } else if (sub.ratio === null || sub.ratio === undefined) {
+                    sub.ratio = 0;
+                }
+            }
+            renderSubjectTable();
+        }
+
+        function updateSubSubName(id, val) {
+            const sub = subjects.find(s => s.id === id);
+            if (!sub) return;
+            sub.name = val;
+            renderSubjectTable();
+        }
+
+        function updateSubCustomName(id, val) {
+            const sub = subjects.find(s => s.id === id);
+            if (!sub) return;
+            sub.name = val;
+            sub.customName = val;
+            updateScheduleDropdowns();
+            updateCalculation();
+        }
+
+        function updateSubRatio(id, val) {
+            const sub = subjects.find(s => s.id === id);
+            if (sub) sub.ratio = parseInt(val) || 0;
+            updateCalculation();
+        }
+
+        function updateCalculation() {
+            let assignedMap = {};
+            subjects.forEach(s => assignedMap[s.id] = 0);
+
+            document.querySelectorAll('.plan-select').forEach(sel => {
+                const sId = sel.value;
+                const min = parseInt(sel.dataset.min);
+                if (sId && assignedMap.hasOwnProperty(sId)) {
+                    assignedMap[sId] += min;
+                }
+            });
+
+            let totalRatio = 0;
+            let totalTarget = 0;
+            let totalAssigned = 0;
+
+            const rows = document.getElementById('subject-tbody').children;
+
+            Array.from(rows).forEach(tr => {
+                const sId = tr.dataset.id;
+                const sub = subjects.find(s => s.id === sId);
+                if (!sub) return;
+
+                const assignedMin = assignedMap[sId] || 0;
+                totalAssigned += assignedMin;
+                tr.querySelector('.assigned-cell').innerText = assignedMin + '분';
+
+                if (sub.category === 'institution') {
+                    tr.querySelector('.weekly-goal-cell').innerText = '-';
+                    tr.querySelector('.daily-avg-cell').innerText = '-';
+                    const statusCell = tr.querySelector('.status-cell');
+                    statusCell.innerText = '-';
+                    statusCell.className = 'status-cell status-def';
+                    const dailyRemCell = tr.querySelector('.daily-rem-cell');
+                    dailyRemCell.innerText = '-';
+                    dailyRemCell.style.color = '#ccc';
+                    return;
+                }
+
+                totalRatio += sub.ratio || 0;
+                const targetMin = Math.round(totalWeeklyMinutes * ((sub.ratio || 0) / 100));
+                totalTarget += targetMin;
+                const remaining = targetMin - assignedMin;
+
+                const dailyAvg = Math.round(targetMin / activeDayCount);
+                let dailyRem = 0;
+                if (remaining > 0) dailyRem = Math.round(remaining / activeDayCount);
+
+                tr.querySelector('.weekly-goal-cell').innerText = targetMin + '분';
+                tr.querySelector('.daily-avg-cell').innerText = dailyAvg + '분';
+
+                const statusCell = tr.querySelector('.status-cell');
+                if (targetMin === 0) {
+                    statusCell.innerText = "-";
+                    statusCell.className = "status-cell status-def";
+                } else if (remaining > 0) {
+                    statusCell.innerText = `${remaining}분 남음`;
+                    statusCell.className = "status-cell status-def";
+                } else if (remaining === 0) {
+                    statusCell.innerText = "달성 ✅";
+                    statusCell.className = "status-cell status-ok";
+                } else {
+                    statusCell.innerText = `${Math.abs(remaining)}분 초과`;
+                    statusCell.className = "status-cell status-over";
+                }
+
+                const dailyRemCell = tr.querySelector('.daily-rem-cell');
+                if (remaining > 0) {
+                    dailyRemCell.innerText = `${dailyRem}분`;
+                    dailyRemCell.style.color = '#4a5bf0';
+                } else if (remaining === 0 && targetMin > 0) {
+                    dailyRemCell.innerText = "0분";
+                    dailyRemCell.style.color = '#52c41a';
+                } else {
+                    dailyRemCell.innerText = "-";
+                    dailyRemCell.style.color = '#ccc';
+                }
+            });
+
+            document.getElementById('total-ratio').innerText = totalRatio + '%';
+            document.getElementById('total-target-min').innerText = totalTarget + '분';
+            document.getElementById('total-assigned-min').innerText = totalAssigned + '분';
+
+            updateDailyTotals();
+        }
+
+        // ===== 3. 시간표 =====
+
+        function renderScheduleStructure() {
+            const tbody = document.getElementById('schedule-body');
+            tbody.innerHTML = '';
+
+            // 구분(수업준비/오전수업 등) 묶음의 시작 인덱스 계산
+            const groupAssignment = new Array(timeSlots.length).fill(null);
+            let gIdx = 0;
+            SCHEDULE_GROUPS.forEach(g => {
+                groupAssignment[gIdx] = g;
+                gIdx += g.rows;
+            });
+
+            timeSlots.forEach((slot, slotIdx) => {
+                const tr = document.createElement('tr');
+                if (slot.type === 'break') {
+                    tr.className = (slot.name === '점심' || slot.name === '저녁') ? 'meal-row' : 'break-row';
+                }
+
+                const group = groupAssignment[slotIdx];
+                if (group) {
+                    const tdGroup = document.createElement('td');
+                    tdGroup.className = 'group-header';
+                    tdGroup.rowSpan = group.rows;
+                    tdGroup.innerText = group.label;
+                    tr.appendChild(tdGroup);
+                }
+
+                const tdTime = document.createElement('td');
+                tdTime.className = 'time-header';
+                tdTime.innerHTML = `${slot.name}<span class="time-detail">${minutesToTimeStr(slot.startMin)}~${minutesToTimeStr(slot.endMin)}<br>(${slot.min}분)</span>`;
+                tr.appendChild(tdTime);
+
+                for (let i = 0; i < 7; i++) {
+                    const td = document.createElement('td');
+                    const wrap = document.createElement('div');
+                    wrap.className = 'cell-wrap';
+
+                    const badge = document.createElement('span');
+                    badge.className = 'avail-badge';
+
+                    const select = document.createElement('select');
+                    select.className = 'plan-select';
+                    select.dataset.min = slot.min;
+                    select.dataset.day = i;
+                    select.dataset.slotIndex = slotIdx;
+                    select.dataset.type = slot.type;
+                    select.innerHTML = '<option value="">-</option>';
+                    select.addEventListener('change', function() {
+                        applySelectColor(this);
+                        toggleMemoVisibility(this);
+                        updateCalculation();
+                    });
+
+                    const memo = document.createElement('input');
+                    memo.type = 'text';
+                    memo.className = 'plan-memo';
+                    memo.placeholder = '메모(단어,독해 등)';
+                    memo.style.display = 'none';
+
+                    wrap.appendChild(badge);
+                    wrap.appendChild(select);
+                    wrap.appendChild(memo);
+                    td.appendChild(wrap);
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            });
+
+            const tfoot = document.getElementById('schedule-tfoot');
+            tfoot.innerHTML = '';
+            const totalTr = document.createElement('tr');
+            totalTr.className = 'daily-summary-row';
+
+            const labelTd = document.createElement('td');
+            labelTd.className = 'time-header';
+            labelTd.style.background = '#3d4cb8';
+            labelTd.style.color = '#fff';
+            labelTd.colSpan = 2;
+            labelTd.innerText = '순공 사용/잔여';
+            totalTr.appendChild(labelTd);
+
+            for (let i = 0; i < 7; i++) {
+                const td = document.createElement('td');
+                td.id = `daily-total-${i}`;
+                td.className = 'daily-total-cell';
+                td.innerHTML = `0분<br><span class="remaining-text">잔여 0분 / 총 0분</span>`;
+                totalTr.appendChild(td);
+            }
+            tfoot.appendChild(totalTr);
+        }
+
+        function toggleMemoVisibility(select) {
+            const wrap = select.parentElement;
+            const memo = wrap.querySelector('.plan-memo');
+            if (!memo) return;
+            if (select.value === '') {
+                memo.style.display = 'none';
+                memo.value = '';
+            } else {
+                memo.style.display = 'block';
+            }
+        }
+
+        function updateScheduleAvailability() {
+            for (let i = 0; i < 7; i++) {
+                const intervals = dailyIntervals[i] || [];
+                timeSlots.forEach((slot, slotIdx) => {
+                    const select = document.querySelector(`.plan-select[data-day="${i}"][data-slot-index="${slotIdx}"]`);
+                    if (!select) return;
+
+                    let avail = 0;
+                    intervals.forEach(iv => { avail += overlapMinutes(slot.startMin, slot.endMin, iv[0], iv[1]); });
+                    select.dataset.avail = avail;
+
+                    const wrap = select.parentElement;
+                    const badge = wrap.querySelector('.avail-badge');
+
+                    if (avail <= 0) {
+                        select.disabled = true;
+                        select.value = '';
+                        applySelectColor(select);
+                        toggleMemoVisibility(select);
+                        wrap.classList.add('cell-unavailable');
+                        if (badge) { badge.className = 'avail-badge unavailable'; badge.textContent = '재원외'; }
+                    } else if (avail < slot.min) {
+                        select.disabled = false;
+                        wrap.classList.remove('cell-unavailable');
+                        if (badge) { badge.className = 'avail-badge partial'; badge.textContent = `일부(${avail}분)`; }
+                    } else {
+                        select.disabled = false;
+                        wrap.classList.remove('cell-unavailable');
+                        if (badge) { badge.className = 'avail-badge'; badge.textContent = ''; }
+                    }
+                });
+            }
+        }
+
+        function updateDailyTotals() {
+            for (let i = 0; i < 7; i++) {
+                let used = 0;
+                document.querySelectorAll(`.plan-select[data-day="${i}"]`).forEach(sel => {
+                    if (sel.value && sel.dataset.type === 'study') {
+                        const avail = parseFloat(sel.dataset.avail);
+                        const min = parseInt(sel.dataset.min);
+                        const cappedMin = isNaN(avail) ? min : Math.min(min, avail);
+                        used += cappedMin;
+                    }
+                });
+                const cap = dailyMaxStudyMinutes[i] || 0;
+                const remaining = cap - used;
+                const cell = document.getElementById(`daily-total-${i}`);
+                if (cell) {
+                    const color = remaining < 0 ? '#ff4d4f' : (remaining === 0 ? '#52c41a' : '#4a5bf0');
+                    cell.innerHTML = `<span style="font-weight:700;">${used}분</span><br><span class="remaining-text" style="color:${color};">잔여 ${remaining}분 / 총 ${cap}분</span>`;
+                }
+            }
+        }
+
+        function updateScheduleDropdowns() {
+            document.querySelectorAll('.plan-select').forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = '<option value="">-</option>';
+                subjects.forEach(sub => {
+                    if (!sub.name) return;
+                    const opt = document.createElement('option');
+                    opt.value = sub.id;
+                    opt.textContent = sub.name;
+                    select.appendChild(opt);
+                });
+                if (subjects.find(s => s.id === currentVal && s.name)) {
+                    select.value = currentVal;
+                } else {
+                    select.value = '';
+                }
+                applySelectColor(select);
+                toggleMemoVisibility(select);
+            });
+        }
+
+        function applySelectColor(select) {
+            const sId = select.value;
+            const sub = subjects.find(s => s.id === sId);
+            if (sub) {
+                select.style.backgroundColor = sub.color;
+                select.style.color = sub.text;
+                select.style.fontWeight = "bold";
+                select.style.border = "1px solid " + sub.text;
+            } else {
+                select.style.backgroundColor = "transparent";
+                select.style.color = "#333";
+                select.style.fontWeight = "normal";
+                select.style.border = "1px solid transparent";
+            }
+        }
+    </script>
+</body>
+</html>
